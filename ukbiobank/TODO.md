@@ -4,7 +4,7 @@
 - [ ] Subset non-European populations
 - [ ] Look in scrips/ for workflow on cluster
 - [ ] Prep reference panel (TGP?)
-- [ ] Use `RFMix` for ibd calling
+- [ ] Use [`RFMix`](https://sites.google.com/site/rfmixlocalancestryinference/) for ibd calling
 - [ ] Make stacked barplot of "painted" genomes
 - [ ] Plot PCs
 
