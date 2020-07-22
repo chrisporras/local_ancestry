@@ -3,6 +3,7 @@
 genetic_maps/*
 scripts/*
 phased_genotypes/*
+metadata/*
 
 # exceptions
 !scipts/*.py
