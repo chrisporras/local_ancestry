@@ -8,6 +8,9 @@ R/*
 *.DS_Store
 
 # exceptions
+!/plink/
+!/data/
+!/admixture/
 !R/*.r
 !R/*.Rmd
 !R/*.html
