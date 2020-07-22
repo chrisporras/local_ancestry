@@ -1,0 +1,280 @@
+---
+title: "HGDP_TGP_pca_admixture"
+author: "Christian Porras"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    theme: cosmo
+    toc: yes
+    toc_float: yes
+  pdf_document:
+    toc: yes
+subtitle: Kenny Lab rotation project
+urlcolor: blue
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+# TGP PCA
+```{r}
+TGP_eigvec <- read_table2("../data/TGP.eigenvec",col_names = FALSE)
+TGP_eigval <- scan("../data/TGP.eigenval")
+```
+
+## Clean eigvecs and label individuals
+```{r}
+# remove repeat ID column
+TGP_eigvec <- TGP_eigvec[,-1]
+# name columns
+names(TGP_eigvec)[1] <- "ind"
+names(TGP_eigvec)[2:ncol(TGP_eigvec)] <- paste0("PC", 1:(ncol(TGP_eigvec)-1))
+
+#### TODO:
+# use TGP .ind to relabel individuals with pop/super pop
+```
+
+### Label indivis with pop
+```{r}
+# From previous work...
+pops <- read.csv(file="../data/1K_genomes_PCA_noanon.csv")[c(1,5,6)]
+# sort by ID
+pops <- pops[order(pops$Sample_ID),]
+# Add population label columns to TGP
+TGP_eigvec <- add_column(TGP_eigvec, super_pop = pops$Super_Population, .after = "ind")
+TGP_eigvec <- add_column(TGP_eigvec, pop = pops$Population, .before = "PC1")
+```
+
+### Make df of eigval loadings
+```{r}
+perc_var_expl <- data.frame(PC = 1:20, pve = TGP_eigval/sum(TGP_eigval)*100) 
+```
+
+## Plot eigval loadings
+```{r}
+loadings <- ggplot(perc_var_expl, aes(PC,pve)) +
+  geom_bar(stat = "identity")
+loadings + ylab("Percentage variance explained") + theme_light()
+```
+
+## Plot PCs
+```{r}
+pcs <- ggplot(TGP_eigvec, aes(PC1, PC2, shape = super_pop, col = pop)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1 (", signif(perc_var_expl$pve[1],3), "%)")) + 
+  ylab(paste0("PC2 (", signif(perc_var_expl$pve[2],3), "%)")) + 
+  theme_light()
+pcs
+```
+
+# HGDP PCA
+```{r}
+HGDP_eigvec <- read_table2("../data/HGDP_plus.eigenvec",col_names = FALSE)
+HGDP_eigval <- scan("../data/HGDP_plus.eigenval")
+```
+
+## Clean eigvecs and label individuals
+```{r}
+# remove repeat ID column
+HGDP_eigvec <- HGDP_eigvec[,-1]
+# name columns
+names(HGDP_eigvec)[1] <- "ind"
+names(HGDP_eigvec)[2:ncol(HGDP_eigvec)] <- paste0("PC", 1:(ncol(HGDP_eigvec)-1))
+### TODO
+# Label w /ind files from .ped
+```
+
+
+## Plot eigval loadings
+```{r}
+perc_var_expl <- data.frame(PC = 1:20, pve = HGDP_eigval/sum(HGDP_eigval)*100) 
+loadings <- ggplot(perc_var_expl, aes(PC,pve)) +
+  geom_bar(stat = "identity")
+loadings + ylab("Percentage variance explained") + theme_light()
+```
+
+## Plot PCs
+```{r}
+pcs <- ggplot(HGDP_eigvec, aes(PC1, PC2)) +
+  geom_point(size=3) +
+  xlab(paste0("PC1 (", signif(perc_var_expl$pve[1],3), "%)")) + 
+  ylab(paste0("PC2 (", signif(perc_var_expl$pve[2],3), "%)")) + 
+  theme_light()
+pcs
+```
+
+# Merge TGP and HGDP
+```{r}
+# Make list of common snps
+TGP_map <- read.delim("../data/TGP_text.map", header = FALSE, quote = "")
+HGDP_map <- read.delim("../data/HGDP_plus_text.map", header = F, quote = "")
+common_snps <- which(TGP_map$V2 %in% HGDP_map$V2)
+write.table(TGP_map$V2[common_snps], file="list.snps", sep="\t", 
+            col.names = F, row.names = F, quote = F)
+```
+
+### extract common snps in both data
+```{bash}
+./../plink_mac_20200616/plink --bfile ../data/HGDP_plus --extract list.snps --make-bed --out HGDP_common
+```
+
+```{bash}
+./../plink_mac_20200616/plink --bfile ../data/TGP --extract list.snps --make-bed --out TGP_common
+```
+### filter low call rate 
+For TGP
+```{bash}
+./../plink_mac_20200616/plink --bfile ../data/TGP_common --geno 0.1 --make-bed --out TGP_common_filtered
+```
+
+For HGDP
+```{bash}
+./../plink_mac_20200616/plink --bfile ../data/HGDP_common --geno 0.1 --make-bed --out HGDP_common_filtered
+```
+
+
+### merge in plink
+First merge attempt to get list of snps to flip
+```{bash}
+./../plink_mac_20200616/plink --bfile HGDP_common_filtered --bmerge TGP_common_filtered.bed TGP_common_filtered.bim TGP_common_filtered.fam --make-bed --out merge_TGP_HGDP
+```
+
+Flip snps in TGP
+```{bash}
+./../plink_mac_20200616/plink --bfile TGP_common_filtered --flip merge_TGP_HGDP-merge.missnp --make-bed --out TGP_common_filtered_flipped
+```
+
+Merge again to get list of variants that won't merge
+```{bash}
+./../plink_mac_20200616/plink --bfile HGDP_common_filtered --bmerge TGP_common_filtered_flipped.bed TGP_common_filtered_flipped.bim TGP_common_filtered_flipped.fam --make-bed --out merge_TGP_HGDP
+```
+
+Exclude those snps TGP
+```{bash}
+./../plink_mac_20200616/plink --bfile TGP_common_filtered_flipped --exclude merge_TGP_HGDP-merge.missnp --make-bed --out TGP_common_filtered_flipped_biallelic
+```
+
+Exclude those snps HGDP
+```{bash}
+./../plink_mac_20200616/plink --bfile HGDP_common_filtered --exclude merge_TGP_HGDP-merge.missnp --make-bed --out HGDP_common_filtered_biallelic
+```
+
+Final merge
+```{bash}
+./../plink_mac_20200616/plink --bfile HGDP_common_filtered_biallelic --bmerge TGP_common_filtered_flipped_biallelic.bed TGP_common_filtered_flipped_biallelic.bim TGP_common_filtered_flipped_biallelic.fam --make-bed --out merge_TGP_HGDP
+```
+
+### Pruning
+Get pruned list of snps to choose
+```{bash}
+./../plink_mac_20200616/plink --bfile merge_TGP_HGDP --indep-pairwise 50 5 0.1 --out prunedsnps
+```
+
+Prune with list of snps
+```{bash}
+./../plink_mac_20200616/plink --bfile merge_TGP_HGDP --extract punedsnps.pruned.in --make-bed --out merge_TGP_HGDP_pruned
+```
+
+## call ADMIXTURE
+Choose a value of k 
+
+k=5
+```{bash}
+./../admixture_macosx-1.3.0/admixture merge_TGP_HGDP_pruned.bed 5 > merge_TGP_HGDP_pruned_k5.log
+```
+
+# ADMIXTURE props
+```{r}
+library(tidyverse)
+admix_df <- read_table2("../data/merge_TGP_HGDP_pruned.5.Q",col_names = FALSE)
+```
+Without labels
+
+```{r}
+barplot(as.matrix(admix_df))
+```
+
+```{r}
+table(pops$Super_Population)
+barplot(table(pops$Super_Population))
+```
+
+
+```{r}
+num_inds <- dim(admix_df)[1]
+num_pops <- dim(admix_df)[2]
+indivs <- paste(rep("ind",num_inds),1:num_inds)
+write.table(indivs, file = "individuals.ind", sep = "\n",
+            col.names = F, row.names = F, quote = F)
+```
+
+
+```{r}
+barplot(admix_df$X1)
+```
+
+```{r}
+ggplot(admix_df, aes(x=X1)) + 
+  geom_histogram()
+```
+
+
+
+
+
+
+
+
+
+
+Making admixture plot...
+
+```{r}
+library(Rcpp)
+cppFunction('
+  std::vector<int> bin3(NumericVector x, double width, double origin = 0) {
+    int bin, nmissing = 0;
+    std::vector<int> out;
+
+    NumericVector::iterator x_it = x.begin(), x_end;
+    for(; x_it != x.end(); ++x_it) {
+      double val = *x_it;
+      if (ISNAN(val)) {
+        ++nmissing;
+      } else {
+        bin = (val - origin) / width;
+        if (bin < 0) continue;
+
+        // Make sure there\'s enough space
+        if (bin >= out.size()) {
+          out.resize(bin + 1);
+        }
+        ++out[bin];
+      }
+    }
+    // Put missing values in the last position
+    out.push_back(nmissing);
+    return out;
+  }
+')
+```
+
+
+```{r}
+library(tidyverse)
+library(reshape2)
+
+bins <- vapply(admix_df, bin3, 1/num_inds, FUN.VALUE = integer(num_inds + 1))
+
+# Next we match up the bins with the breaks
+binsdf <- data.frame(
+  breaks = c(seq(0, 1, length = 100), NA),
+  bins)
+
+# Then melt and plot
+binsm <- subset(melt(binsdf, id = "breaks"), !is.na(breaks))
+qplot(breaks, value, data = binsm, geom = "line", colour = variable)
+```
+
