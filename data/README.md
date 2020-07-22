@@ -1,1 +1,2 @@
-TGP and HGDP .bed .bim .fam files go here.
+# TGP and HGDP data
+Thousand Genomes Project and Human Genome Diversity Project .bed .bim .fam files go here.
