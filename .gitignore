@@ -1,0 +1,13 @@
+# to ignore
+data/*
+plink/*
+admixture/*
+R/*
+*.html
+*.Rmd
+*.DS_Store
+
+# exceptions
+!R/*.r
+!R/*.Rmd
+!R/*.html
