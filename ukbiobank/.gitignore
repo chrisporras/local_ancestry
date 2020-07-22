@@ -1,2 +1,11 @@
 # ignore
 *.DS_store
+genetic_maps/*
+scripts/*
+phased_genotypes/*
+
+# exceptions
+!scipts/*.py
+!genetic_maps/*.md
+!phased_genotypes/*.md
+!metadata/*.md
