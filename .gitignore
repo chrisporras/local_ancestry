@@ -14,3 +14,9 @@ R/*
 !R/*.r
 !R/*.Rmd
 !R/*.html
+!/data/HGDP_plus.bed
+!/data/HGDP_plus.bim
+!/data/HGDP_plus.fam
+!/data/TGP.bed
+!/data/TGP.bim
+!/data/TGP.fam
