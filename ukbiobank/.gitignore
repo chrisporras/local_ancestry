@@ -6,7 +6,8 @@ phased_genotypes/*
 metadata/*
 
 # exceptions
-!scipts/*.py
+!scripts/*.py
+!scripts/*.sh
 !genetic_maps/*.md
 !phased_genotypes/*.md
 !metadata/*.md
