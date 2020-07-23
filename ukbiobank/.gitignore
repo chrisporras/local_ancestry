@@ -4,8 +4,12 @@ genetic_maps/*
 scripts/*
 phased_genotypes/*
 metadata/*
+src/*
 
 # exceptions
+!src/*.sh
+!src/*.pbs
+!src/*.log
 !scripts/*.py
 !scripts/*.sh
 !genetic_maps/*.md

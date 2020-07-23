@@ -1,0 +1,2 @@
+module load qctool
+qctool -g /sc/arion/projects/ipm2/christian/local_ancestry/ukbiobank/src/ukb_hap_chr22_v2.bgen -s ukb1251_hap_chr22_v2_s487395.sample -og non_white_british_chr22.vcf -incl-samples NON_white-British.txt
