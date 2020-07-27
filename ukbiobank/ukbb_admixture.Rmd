@@ -1,0 +1,46 @@
+---
+title: "UKBB_admixture"
+author: "cporras"
+date: "7/27/2020"
+output: 
+  html_document: 
+    fig_width: 17
+    fig_height: 14
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+non_white_inds <- read.table("metadata/NON_white-British.txt",sep="\t",header=F)
+```
+
+# Reported Ethnicities/Nationalities
+What ethnicity?
+```{r}
+barplot(table(non_white_inds$V8))
+```
+What nationality?
+```{r}
+barplot(table(non_white_inds$V9))
+```
+Where from UK?
+```{r}
+barplot(table(non_white_inds$V10))
+```
+## Subset afro-carribean  
+```{r}
+afro_carr <- non_white_inds[which(non_white_inds$V8=="Black or Black British"),]
+head(afro_carr)
+```
+
+```{r}
+write.table(afro_carr, file="afro_carribean_ukbb.txt", sep="\t", quote = F, row.names = F, col.names = F)
+```
+
+
+
+
