@@ -13,10 +13,11 @@ with open(infile) as fam:
     with open(outfile,"w") as out:
         df = csv.reader(fam, delimiter="\t")
         for line in df:
-            fam_id = line[0]
-            col = [fam_id,fam_id]
+            fam_id_line = line[1] # e.g. A550484-4217356-050915-782_D02
+            fam_id = fam_id_line.split("-")[1] # e.g. 4217356
+            col = [fam_id,fam_id] # e.g. [4217356, 4217356]
             for item in col:
-                out.write("%s\t" % item)
+                out.write("%s\t" % item) # make .tsv
             out.write("\n")
         out.close()
     fam.close()
