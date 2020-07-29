@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(tidyverse)
 
-non_white_inds <- read.table("metadata/NON_white-British.txt",sep="\t",header=F)
+non_white_inds <- read.table("../metadata/NON_white-British.txt",sep="\t",header=F)
 ```
 
 # Reported Ethnicities/Nationalities
@@ -31,6 +31,31 @@ Where from UK?
 ```{r}
 barplot(table(non_white_inds$V10))
 ```
+
+# Append .fam IDs
+
+```{r}
+ukb_ids <- read.table("../../UK_BB.id.mapper.exclusions_removed.txt",sep="\t",header=F)
+```
+
+```{r}
+fam_ids <- list()
+for(id in non_white_inds$V2){
+  row_idx <- which(ukb_ids$V2 == id)
+  fam_id <- ukb_ids[row_idx, ]
+  fam_ids<- c(fam_ids,fam_id$V3)  
+}
+```
+
+```{r}
+write.table(fam_ids, file="non_white_ukbb_fam_ids.txt", sep="\n", quote = F, row.names = F, col.names = F)
+```
+
+
+
+
+
+
 ## Subset afro-carribean  
 ```{r}
 afro_carr <- non_white_inds[which(non_white_inds$V8=="Black or Black British"),]
